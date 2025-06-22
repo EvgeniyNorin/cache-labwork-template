@@ -1,0 +1,123 @@
+name: Cache Lab Tests
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Run tests with coverage
+        run: |
+          go test ./tests -v -coverprofile=coverage.out -covermode=atomic
+          go test ./tests -v -coverprofile=coverage.out -covermode=atomic -json > test-results.json
+
+      - name: Generate coverage report
+        run: |
+          go tool cover -func=coverage.out
+          go tool cover -html=coverage.out -o coverage.html
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report
+          path: coverage.html
+
+      - name: Parse test results
+        run: |
+          echo "=== TEST RESULTS ==="
+          echo "Total tests: $(grep -c '"Test":' test-results.json || echo 0)"
+          echo "Passed tests: $(grep -c '"Action":"pass"' test-results.json || echo 0)"
+          echo "Failed tests: $(grep -c '"Action":"fail"' test-results.json || echo 0)"
+          echo ""
+          echo "=== COVERAGE SUMMARY ==="
+          go tool cover -func=coverage.out | tail -1
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const testResults = JSON.parse(fs.readFileSync('test-results.json', 'utf8'));
+            
+            const passed = testResults.filter(t => t.Action === 'pass').length;
+            const failed = testResults.filter(t => t.Action === 'fail').length;
+            const total = passed + failed;
+            
+            const coverage = fs.readFileSync('coverage.out', 'utf8');
+            const coverageMatch = coverage.match(/total:\s+\(statements\)\s+(\d+\.\d+)%/);
+            const coveragePercent = coverageMatch ? coverageMatch[1] : '0.0';
+            
+            const comment = `## Cache Lab Test Results
+            
+            ### Test Results
+            - ✅ Passed: ${passed}/${total}
+            - ❌ Failed: ${failed}/${total}
+            
+            ### Coverage
+            - 📊 Coverage: ${coveragePercent}%
+            
+            ### Grading Criteria
+            - **Correctness (60%)**: Based on passed tests
+            - **Coverage (20%)**: Based on code coverage
+            - **Code Quality (20%)**: Manual review required
+            
+            ${failed > 0 ? '⚠️ Some tests failed. Please check the implementation.' : '🎉 All tests passed!'}
+            `;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            }); 
+
+name: Lint
+
+on:
+  push:
+    paths:
+      - '**.go'
+  pull_request:
+    paths:
+      - '**.go'
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+
+      - name: Run go fmt
+        run: |
+          fmtres=$(gofmt -l .)
+          if [ -n "$fmtres" ]; then
+            echo "The following files are not formatted:"
+            echo "$fmtres"
+            exit 1
+          fi
+
+      - name: Run go vet
+        run: go vet ./...
+
+      - name: Install staticcheck
+        run: go install honnef.co/go/tools/cmd/staticcheck@latest
+
+      - name: Run staticcheck
+        run: staticcheck ./...
