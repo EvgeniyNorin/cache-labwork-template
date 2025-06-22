@@ -22,9 +22,12 @@ func TestFIFOCache(t *testing.T) {
 	assert.Equal(t, 1, val)
 
 	// Test FIFO eviction
-	c.Set("b", 2)
-	c.Set("c", 3)
-	c.Set("d", 4) // This should evict "a"
+	err = c.Set("b", 2)
+	require.NoError(t, err)
+	err = c.Set("c", 3)
+	require.NoError(t, err)
+	err = c.Set("d", 4) // This should evict "a"
+	require.NoError(t, err)
 
 	_, err = c.Get("a")
 	assert.Error(t, err)
@@ -52,9 +55,12 @@ func TestLRUCache(t *testing.T) {
 	c := cache.NewLRUCache[string, int](3)
 
 	// Test basic operations
-	c.Set("a", 1)
-	c.Set("b", 2)
-	c.Set("c", 3)
+	err := c.Set("a", 1)
+	require.NoError(t, err)
+	err = c.Set("b", 2)
+	require.NoError(t, err)
+	err = c.Set("c", 3)
+	require.NoError(t, err)
 
 	// Access "a" to make it most recently used
 	val, err := c.Get("a")
@@ -62,7 +68,8 @@ func TestLRUCache(t *testing.T) {
 	assert.Equal(t, 1, val)
 
 	// Add "d" - should evict "b" (least recently used)
-	c.Set("d", 4)
+	err = c.Set("d", 4)
+	require.NoError(t, err)
 
 	_, err = c.Get("b")
 	assert.Error(t, err)
@@ -85,22 +92,30 @@ func TestLFUCache(t *testing.T) {
 	c := cache.NewLFUCache[string, int](3)
 
 	// Test basic operations
-	c.Set("a", 1)
-	c.Set("b", 2)
-	c.Set("c", 3)
+	err := c.Set("a", 1)
+	require.NoError(t, err)
+	err = c.Set("b", 2)
+	require.NoError(t, err)
+	err = c.Set("c", 3)
+	require.NoError(t, err)
 
 	// Access "a" multiple times to increase its frequency
-	c.Get("a")
-	c.Get("a")
-	c.Get("a")
+	_, err = c.Get("a")
+	require.NoError(t, err)
+	_, err = c.Get("a")
+	require.NoError(t, err)
+	_, err = c.Get("a")
+	require.NoError(t, err)
 
 	// Access "b" once
-	c.Get("b")
+	_, err = c.Get("b")
+	require.NoError(t, err)
 
 	// Add "d" - should evict "c" (least frequently used)
-	c.Set("d", 4)
+	err = c.Set("d", 4)
+	require.NoError(t, err)
 
-	_, err := c.Get("c")
+	_, err = c.Get("c")
 	assert.Error(t, err)
 
 	val, err := c.Get("a")
@@ -121,8 +136,10 @@ func TestTTLCache(t *testing.T) {
 	c := cache.NewTTLCache[string, int](3, 100*time.Millisecond)
 
 	// Test basic operations
-	c.Set("a", 1)
-	c.Set("b", 2)
+	err := c.Set("a", 1)
+	require.NoError(t, err)
+	err = c.Set("b", 2)
+	require.NoError(t, err)
 
 	val, err := c.Get("a")
 	require.NoError(t, err)
@@ -139,7 +156,8 @@ func TestTTLCache(t *testing.T) {
 	assert.Error(t, err)
 
 	// Test that new entries work after expiration
-	c.Set("c", 3)
+	err = c.Set("c", 3)
+	require.NoError(t, err)
 	val, err = c.Get("c")
 	require.NoError(t, err)
 	assert.Equal(t, 3, val)
@@ -150,17 +168,24 @@ func TestARCCache(t *testing.T) {
 	c := cache.NewARCCache[string, int](4)
 
 	// Test basic operations
-	c.Set("a", 1)
-	c.Set("b", 2)
-	c.Set("c", 3)
-	c.Set("d", 4)
+	err := c.Set("a", 1)
+	require.NoError(t, err)
+	err = c.Set("b", 2)
+	require.NoError(t, err)
+	err = c.Set("c", 3)
+	require.NoError(t, err)
+	err = c.Set("d", 4)
+	require.NoError(t, err)
 
 	// Access some items to change their status
-	c.Get("a")
-	c.Get("b")
+	_, err = c.Get("a")
+	require.NoError(t, err)
+	_, err = c.Get("b")
+	require.NoError(t, err)
 
 	// Add new item - should trigger adaptive replacement
-	c.Set("e", 5)
+	err = c.Set("e", 5)
+	require.NoError(t, err)
 
 	// Verify that some items are still accessible
 	// (ARC behavior depends on implementation)
@@ -190,7 +215,8 @@ func TestCacheErrors(t *testing.T) {
 	assert.Equal(t, cache.ErrKeyNotFound, err)
 
 	// Test basic operations work
-	c.Set("a", 1)
+	err = c.Set("a", 1)
+	require.NoError(t, err)
 	val, err := c.Get("a")
 	require.NoError(t, err)
 	assert.Equal(t, 1, val)
