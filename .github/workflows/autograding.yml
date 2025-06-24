@@ -5,6 +5,7 @@ on:
 permissions:
   checks: write
   actions: read
+  contents: read
 jobs:
   autograding:
     runs-on: ubuntu-latest
