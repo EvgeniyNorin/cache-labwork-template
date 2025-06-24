@@ -26,19 +26,4 @@ jobs:
         run: |
           go tool cover -func=coverage.out
           go tool cover -html=coverage.out -o coverage.html
-
-      - name: Upload coverage report
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: coverage.html
-
-      - name: Parse test results
-        run: |
-          echo "=== TEST RESULTS ==="
-          echo "Total tests: $(grep -c '"Test":' test-results.json || echo 0)"
-          echo "Passed tests: $(grep -c '"Action":"pass"' test-results.json || echo 0)"
-          echo "Failed tests: $(grep -c '"Action":"fail"' test-results.json || echo 0)"
-          echo ""
-          echo "=== COVERAGE SUMMARY ==="
-          go tool cover -func=coverage.out | tail -1
+    

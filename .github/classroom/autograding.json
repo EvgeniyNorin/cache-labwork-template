@@ -1,0 +1,28 @@
+{
+  "tests": [
+    {
+      "name": "FIFO Cache Implementation",
+      "setup": "go mod download",
+      "run": "go test ./tests -run TestFIFOCache -v",
+      "points": 10
+    },
+    {
+      "name": "LRU Cache Implementation", 
+      "setup": "go mod download",
+      "run": "go test ./tests -run TestLRUCache -v",
+      "points": 10
+    },
+    {
+      "name": "LFU Cache Implementation",
+      "setup": "go mod download", 
+      "run": "go test ./tests -run TestLFUCache -v",
+      "points": 10
+    },
+    {
+      "name": "TTL Cache Implementation",
+      "setup": "go mod download",
+      "run": "go test ./tests -run TestTTLCache -v", 
+      "points": 10
+    }
+  ]
+} 

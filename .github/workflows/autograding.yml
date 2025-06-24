@@ -1,0 +1,33 @@
+name: "Autograding"
+
+on: [push]
+
+jobs:
+  autograde:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Run grading script
+        run: go run scripts/grade.go
+
+      - name: Report grades
+        uses: education/autograding-grading-reporter@v1
+        with:
+          runners: |
+            {
+              "ubuntu-latest": {
+                "results_file": "test-results.json",
+                "grading_config": ".github/classroom/autograding.json",
+                "summary_file": "grading-summary.txt"
+              }
+            } 
